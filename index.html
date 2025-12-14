@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bootstrap demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+</head>
+
+<body>
+    <h1 id="coinName"></h1>
+    <h3 id="coinPrice"></h3>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script>
+        var coinName = document.getElementById("coinName");
+        var coinPrice = document.getElementById("coinPrice");
+
+        async function fetchCoinData() {
+            const rootURI = "https://api.coingecko.com/api/v3/";
+
+            try {
+                const response = await fetch(rootURI + "coins/bitcoin");
+                const data = await response.json();
+
+                coinName.innerText = data.name;
+                coinPrice.innerText = "$" + data.market_data.current_price.usd;
+            } catch (error){
+                console.error("Error fetching data: ", error);
+            }
+        }
+        fetchCoinData();
+    </script>
+</body>
+</html>
