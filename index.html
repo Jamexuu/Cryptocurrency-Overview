@@ -4,36 +4,207 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bootstrap demo</title>
+    <title>Coingecko API</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+
+    <style>
+        .coin-card {
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .coin-card:hover {
+            transform: scale(1.05);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            box-shadow: 0 0 0 0.05rem #198754 !important;
+            outline: none !important;
+        }
+    </style>
 </head>
 
-<body>
-    <h1 id="coinName"></h1>
-    <h3 id="coinPrice"></h3>
+<div>
+    <div class="container-fluid" style="background-color: #198754;">
+        <div class="row p-3">
+            <div class="col text-white">
+                <div class="h3">
+                    <a href="index.html" class="text-decoration-none text-white">Coingecko</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container mt-5 text-center p-sm-5">
+        <div class="row mb-3">
+            <div class="col-9 col-md-10 col-lg-11">
+                <input type="text" class="form-control p-3" id="searchInput" placeholder="Search Coin">
+            </div>
+            <div class="col-3 col-md-2 col-lg-1 justify-content-center d-flex align-items-center">
+                <button class="btn btn-success p-3 text-wrap" onclick="searchCoin()">Search</button>
+            </div>
+        </div>
+        <div class="row" id="contentArea">
+
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="fs-6" id="pageText">
+                    Page 1
+                </div>
+            </div>
+        </div>
+        <div class="row mt-2" id="pagination">
+            <div class="col">
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                            <a class="page-link" aria-label="Previous" onclick="prevPage()">
+                                <span aria-hidden="true" style="color: #198754">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" aria-label="Next" onclick="nextPage()">
+                                <span aria-hidden="true" style="color: #198754">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
     <script>
-        var coinName = document.getElementById("coinName");
-        var coinPrice = document.getElementById("coinPrice");
+        var contentArea = document.getElementById("contentArea");
+        var pageText = document.getElementById("pageText");
+        const rootURI = "https://api.coingecko.com/api/v3/";
 
-        async function fetchCoinData() {
-            const rootURI = "https://api.coingecko.com/api/v3/";
+        var page = 1;
 
-            try {
-                const response = await fetch(rootURI + "coins/bitcoin");
-                const data = await response.json();
-
-                coinName.innerText = data.name;
-                coinPrice.innerText = "$" + data.market_data.current_price.usd;
-            } catch (error){
-                console.error("Error fetching data: ", error);
+        function prevPage() {
+            if (page != 1) {
+                page--;
+                pageText.innerHTML = "Page " + page;
+                contentArea.innerHTML = "";
+                fetchCoins();
             }
         }
-        fetchCoinData();
+
+        function nextPage() {
+            page++;
+            pageText.innerHTML = "Page " + page;
+            contentArea.innerHTML = "";
+            fetchCoins();
+        }
+
+        const formatUSD = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+        });
+
+        const formatPHP = new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP'
+        });
+
+        async function searchCoin() {
+            const fetchCoinSearched = await fetch(rootURI + "coins/" + document.getElementById("searchInput").value);
+            const coinSearched = await fetchCoinSearched.json();
+
+            var pagination = document.getElementById("pagination");
+            pageText.style.display = "none";
+            pagination.style.display = "none";
+
+            const percentage24H = coinSearched.market_data.price_change_percentage_24h_in_currency > 0 ? "text-success" : "text-danger";
+            const percentage7D = coinSearched.market_data.price_change_percentage_7d_in_currency > 0 ? "text-success" : "text-danger";
+            const percentage30D = coinSearched.market_data.price_change_percentage_30d_in_currency > 0 ? "text-success" : "text-danger";
+
+            contentArea.innerHTML = `
+                <div class="col-12 col-md-6 col-lg-3 mb-4">
+                    <div class="coin-card card p-4 text-center" onclick="window.location.href='coin-showcase.html?coin=`+ coinSearched.id + `'">
+                        <img src="`+ coinSearched.image.large + `" alt="" class="img-fluid p-5">
+                        <div class="h4">`+ coinSearched.name + `</div>
+                        <div class="h5">`+ formatUSD.format(coinSearched.market_data.current_price.usd) + `</div>
+                        <div class="h6 text-secondary">`+ formatPHP.format(coinSearched.market_data.current_price.php) + `</div>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="fs-6 text-secondary">24h</div>
+                                <div class="fs-6 ` + percentage24H + `">` + coin.price_change_percentage_24h_in_currency.toFixed(2) + `%</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-6 text-secondary">7d</div>
+                                <div class="fs-6 ` + percentage7D + `">` + coin.price_change_percentage_7d_in_currency.toFixed(2) + `%</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-6 text-secondary">30d</div>
+                                <div class="fs-6 ` + percentage30D + `">` + coin.price_change_percentage_30d_in_currency.toFixed(2) + `%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            `;
+        }
+        
+
+        async function fetchCoins() {
+
+            try {
+                // fetch USD prices for top 12 coins by market cap
+                const fetchCoins = await fetch(rootURI + "coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=" + page + "&sparkline=false&price_change_percentage=24h,7d,30d");;
+                const coins = await fetchCoins.json();
+
+                // fetch PHP prices for the same coins
+                const fetchCoinsPHP = await fetch(rootURI + "coins/markets?vs_currency=php&order=market_cap_desc&per_page=12&page=" + page + "&sparkline=false");
+                const coinsPHP = await fetchCoinsPHP.json();
+
+                // map the coin id to PHP price
+                const phpPriceMap = Object.fromEntries(
+                    coinsPHP.map(coin => [coin.id, coin.current_price])
+                );
+
+                for (coin of coins) {
+                    const phpPrice = phpPriceMap[coin.id];
+                    const percentage24H = coin.price_change_percentage_24h_in_currency > 0 ? "text-success" : "text-danger";
+                    const percentage7D = coin.price_change_percentage_7d_in_currency > 0 ? "text-success" : "text-danger";
+                    const percentage30D = coin.price_change_percentage_30d_in_currency > 0 ? "text-success" : "text-danger";
+
+                    contentArea.innerHTML += `
+                        <div class="col-12 col-md-6 col-lg-3 mb-4">
+                            <div class="coin-card card p-4 text-center" onclick="window.location.href='coin-showcase.html?coin=`+ coin.id + `'">
+                                <img src="`+ coin.image + `" alt="" class="img-fluid p-5">
+                                <div class="h4">`+ coin.name + `</div>
+                                <div class="h5">`+ formatUSD.format(coin.current_price) + `</div>
+                                <div class="h6 text-secondary">`+ formatPHP.format(phpPrice) + `</div>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <div class="fs-6 text-secondary">24h</div>
+                                        <div class="fs-6 ` + percentage24H + `">` + coin.price_change_percentage_24h_in_currency.toFixed(2) + `%</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="fs-6 text-secondary">7d</div>
+                                        <div class="fs-6 ` + percentage7D + `">` + coin.price_change_percentage_7d_in_currency.toFixed(2) + `%</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="fs-6 text-secondary">30d</div>
+                                        <div class="fs-6 ` + percentage30D + `">` + coin.price_change_percentage_30d_in_currency.toFixed(2) + `%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    `;
+                }
+
+            } catch (error) {
+                console.log("Error fetching data: ", error);
+            }
+        }
+        fetchCoins();
     </script>
-</body>
+    </body>
+
 </html>
