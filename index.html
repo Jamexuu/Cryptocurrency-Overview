@@ -111,12 +111,23 @@
         });
 
         async function searchCoin() {
-            const fetchCoinSearched = await fetch(rootURI + "coins/" + document.getElementById("searchInput").value);
+            const searchInput = document.getElementById("searchInput").value
+            const fetchCoinSearched = await fetch(rootURI + "coins/" + searchInput);
             const coinSearched = await fetchCoinSearched.json();
 
             var pagination = document.getElementById("pagination");
             pageText.style.display = "none";
             pagination.style.display = "none";
+
+            if (!coinSearched.ok){
+                contentArea.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger" role="alert">
+                            Coin not found. Please check your spelling and try again.
+                        </div>
+                    </div>
+                `;
+            }
 
             const percentage24H = coinSearched.market_data.price_change_percentage_24h_in_currency > 0 ? "text-success" : "text-danger";
             const percentage7D = coinSearched.market_data.price_change_percentage_7d_in_currency > 0 ? "text-success" : "text-danger";
