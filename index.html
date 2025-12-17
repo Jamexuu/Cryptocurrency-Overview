@@ -86,7 +86,7 @@
         var page = 1;
 
         function prevPage() {
-            if (page != 1) {
+            if (page > 1) {
                 page--;
                 pageText.innerHTML = "Page " + page;
                 contentArea.innerHTML = "";
