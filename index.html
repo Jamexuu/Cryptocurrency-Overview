@@ -28,7 +28,7 @@
     </style>
 </head>
 
-<div>
+<body>
     <div class="container-fluid" style="background-color: #198754;">
         <div class="row p-3">
             <div class="col text-white">
@@ -38,6 +38,7 @@
             </div>
         </div>
     </div>
+    
     <div class="container mt-5 text-center p-sm-5">
         <div class="row mb-3">
             <div class="col-9 col-md-10 col-lg-11">
@@ -73,6 +74,15 @@
                         </li>
                     </ul>
                 </nav>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid bg-light border-top mt-auto">
+        <div class="row">
+            <div class="col text-center py-3">
+                <small>
+                    Note: The CoinGecko API has a rate limit of 10-30 calls per minute. If you see a rate limit warning, please wait and try again.
+                </small>
             </div>
         </div>
     </div>
@@ -116,6 +126,7 @@
         async function searchCoin() {
             const searchInput = document.getElementById("searchInput").value
             const fetchCoinSearched = await fetch(rootURI + "coins/" + searchInput);
+            if (handleRateLimitError(fetchCoinSearched)) return;
 
             if (!fetchCoinSearched.ok) {
                 contentArea.innerHTML = `
@@ -174,8 +185,9 @@
                         </div>
                     </div>
                 `;
-                return;
+                return true;
             }
+            return false;
         }
 
         async function fetchCoins() {
@@ -183,12 +195,12 @@
             try {
                 // fetch USD prices for top 12 coins by market cap
                 const fetchCoins = await fetch(rootURI + "coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=" + page + "&sparkline=false&price_change_percentage=24h,7d,30d");
-                handleRateLimitError(fetchCoins);
+                if (handleRateLimitError(fetchCoins)) return;
                 const coins = await fetchCoins.json();
 
                 // fetch PHP prices for the same coins
                 const fetchCoinsPHP = await fetch(rootURI + "coins/markets?vs_currency=php&order=market_cap_desc&per_page=12&page=" + page + "&sparkline=false");
-                handleRateLimitError(fetchCoinsPHP);
+                if (handleRateLimitError(fetchCoinsPHP)) return;
                 const coinsPHP = await fetchCoinsPHP.json();
                 
 
@@ -236,6 +248,6 @@
         }
         fetchCoins();
     </script>
-    </body>
+</body>
 
 </html>
