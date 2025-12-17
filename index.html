@@ -19,7 +19,9 @@
             transform: scale(1.05);
         }
 
-        input:focus, textarea:focus, select:focus {
+        input:focus,
+        textarea:focus,
+        select:focus {
             box-shadow: 0 0 0 0.05rem #198754 !important;
             outline: none !important;
         }
@@ -115,7 +117,7 @@
             const searchInput = document.getElementById("searchInput").value
             const fetchCoinSearched = await fetch(rootURI + "coins/" + searchInput);
 
-            if (!fetchCoinSearched.ok){
+            if (!fetchCoinSearched.ok) {
                 contentArea.innerHTML = `
                     <div class="col-12">
                         <div class="alert alert-danger" role="alert">
@@ -161,18 +163,34 @@
                 
             `;
         }
-        
+
+        // due to rate limiting of the api, this function show a message when limit is reached
+        function handleRateLimitError(fetchAPI){
+            if (fetchAPI.status === 429) {
+                contentArea.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-warning" role="alert">
+                            Rate limit exceeded. Please wait and try again later.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+        }
 
         async function fetchCoins() {
 
             try {
                 // fetch USD prices for top 12 coins by market cap
-                const fetchCoins = await fetch(rootURI + "coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=" + page + "&sparkline=false&price_change_percentage=24h,7d,30d");;
+                const fetchCoins = await fetch(rootURI + "coins/markets?vs_currency=usd&order=market_cap_desc&per_page=12&page=" + page + "&sparkline=false&price_change_percentage=24h,7d,30d");
+                handleRateLimitError(fetchCoins);
                 const coins = await fetchCoins.json();
 
                 // fetch PHP prices for the same coins
                 const fetchCoinsPHP = await fetch(rootURI + "coins/markets?vs_currency=php&order=market_cap_desc&per_page=12&page=" + page + "&sparkline=false");
+                handleRateLimitError(fetchCoinsPHP);
                 const coinsPHP = await fetchCoinsPHP.json();
+                
 
                 // map the coin id to PHP price
                 const phpPriceMap = Object.fromEntries(
